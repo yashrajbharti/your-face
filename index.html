@@ -13,6 +13,7 @@
             margin: 0;
             overflow: hidden;
             background: #000;
+            font-family: system-ui, -apple-system, sans-serif;
         }
 
         video {
@@ -22,11 +23,53 @@
             transform: scaleX(-1);
             /* Mirror effect */
         }
+
+        #pip-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            outline: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        #pip-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        #pip-btn:active {
+            transform: scale(0.95);
+        }
+
+        #pip-btn svg {
+            fill: white;
+            width: 24px;
+            height: 24px;
+        }
     </style>
 </head>
 
-<body>
+<body id="c">
     <video id="v" autoplay playsinline></video>
+    <button id="pip-btn" title="Open Picture-in-Picture">
+        <svg viewBox="0 0 24 24">
+            <path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 .02H3V4.97h18v14.05z" />
+        </svg>
+    </button>
     <script>
         // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
@@ -35,17 +78,54 @@
             });
         }
 
+        const video = document.getElementById('v');
+        const pipBtn = document.getElementById('pip-btn');
+        const container = document.getElementById('c');
+
         async function s() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: 'user' }
                 });
-                document.getElementById('v').srcObject = stream;
+                video.srcObject = stream;
             } catch (e) {
                 console.error(e);
             }
         }
         s();
+
+        // Document PiP Logic
+        if (!('documentPictureInPicture' in window)) {
+            pipBtn.style.display = 'none';
+        }
+
+        pipBtn.addEventListener('click', async () => {
+            try {
+                // Open a PiP window.
+                const pipWindow = await window.documentPictureInPicture.requestWindow({
+                    width: video.clientWidth,
+                    height: video.clientHeight,
+                });
+
+                // Copy styles to PiP window
+                const style = document.createElement('style');
+                style.textContent = `
+                    body { margin: 0; background: #000; overflow: hidden; }
+                    video { width: 100vw; height: 100vh; object-fit: cover; transform: scaleX(-1); }
+                `;
+                pipWindow.document.head.appendChild(style);
+
+                // Move video to PiP window
+                pipWindow.document.body.append(video);
+
+                // Handle PiP window closing
+                pipWindow.addEventListener('pagehide', (event) => {
+                    container.prepend(video);
+                });
+            } catch (e) {
+                console.error('PiP failed:', e);
+            }
+        });
     </script>
 </body>
 

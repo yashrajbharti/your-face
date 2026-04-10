@@ -1,4 +1,4 @@
-# your-face
+# Your face
 
 A minimalist, high-performance, full-screen camera Progressive Web App (PWA). No buttons, no clutter—just a clean, mirrored video feed of your face.
 

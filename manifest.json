@@ -1,6 +1,6 @@
 {
-  "name": "Minimal Camera",
-  "short_name": "Camera",
+  "name": "Your face",
+  "short_name": "Your face",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",
